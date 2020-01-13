@@ -1,0 +1,52 @@
+version: '3.4'
+x-defaults: &default
+  command: "sleep infinity"
+  image: rabbitmqclient
+  restart: on-failure
+  depends_on:
+    - rabbitmq
+  links:
+    - rabbitmq
+  volumes:
+    - '.:/rabbit'
+x-defaults: &mailer
+  <<: *default
+  environment:
+    RABBITMQ: rabbitmq
+    QUEUE: mailer
+x-defaults: &reporting
+  <<: *default
+  environment:
+    RABBITMQ: rabbitmq
+    QUEUE: reporting
+
+services:
+  rabbitmq:
+    image: rabbitmq
+    container_name: rabbitmq
+    volumes:
+      - './rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins'
+    ports:
+      - 5672:5672
+      - 15672:15672
+  publisher:
+    command: 'sleep infinity'
+    image: rabbitmqclient
+    container_name: publisher
+    environment:
+      RABBITMQ: rabbitmq
+    volumes:
+      - '.:/rabbit'
+  worker1:
+    container_name: worker1
+    <<: *reporting
+  worker2:
+    container_name: worker2
+    <<: *reporting
+  worker3:
+    container_name: worker3
+    <<: *mailer
+  worker4:
+    container_name: worker4
+    <<: *mailer
+
